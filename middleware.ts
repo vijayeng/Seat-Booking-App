@@ -8,6 +8,7 @@ export const config = {
     "/settings/:path*",
     "/api/private/:path*",
     "/api/seats/:path*",
+    "/api/payment/:path*",
   ],
 };
 

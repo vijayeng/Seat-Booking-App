@@ -10,6 +10,7 @@ const PROTECTED_PATH_PREFIXES = [
   "/settings",
   "/api/private",
   "/api/seats",
+  "/api/payment",
 ];
 
 function isProtectedPath(pathname: string) {
