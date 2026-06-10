@@ -5,3 +5,62 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum SeatStatus {
+  AVAILABLE
+  HELD
+  RESERVED
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  passwordHash  String
+  createdAt     DateTime      @default(now())
+  reservations  Reservation[]
+  heldSeats     Seat[]        @relation("SeatHeldBy")
+}
+
+model Seat {
+  id            String        @id @default(cuid())
+  seatNumber    String        @unique
+  status        SeatStatus    @default(AVAILABLE)
+  heldUntil     DateTime?
+  heldByUserId  String?
+  heldByUser    User?         @relation("SeatHeldBy", fields: [heldByUserId], references: [id], onDelete: SetNull)
+  reservations  Reservation[]
+}
+
+model Reservation {
+  id           String             @id @default(cuid())
+  userId       String
+  seatId       String
+  status       ReservationStatus  @default(PENDING)
+  createdAt    DateTime           @default(now())
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seat         Seat               @relation(fields: [seatId], references: [id], onDelete: Restrict)
+  payment      Payment?
+
+  @@index([userId])
+  @@index([seatId])
+}
+
+model Payment {
+  id             String          @id @default(cuid())
+  reservationId  String          @unique
+  status         PaymentStatus   @default(PENDING)
+  createdAt      DateTime        @default(now())
+  reservation    Reservation     @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+}
