@@ -1,8 +1,8 @@
 import type { NextRequest } from "next/server";
-import { handleMiddleware } from "./middleware/index";
+import { handleMiddleware } from "./middleware/auth";
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/dashboard/:path*", "/account/:path*", "/settings/:path*", "/api/private/:path*"],
 };
 
 export function middleware(request: NextRequest) {
