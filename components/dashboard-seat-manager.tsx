@@ -78,6 +78,21 @@ async function holdAndConfirmSeat(seatId: string) {
   return (await holdResponse.json()) as { seat: Seat };
 }
 
+async function logoutUser() {
+  const response = await fetch("/api/auth/logout", {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+
+    throw new Error(payload?.error ?? "Unable to log out.");
+  }
+}
+
 export function DashboardSeatManager() {
   const router = useRouter();
   const [seats, setSeats] = useState<Seat[]>([]);
@@ -89,6 +104,7 @@ export function DashboardSeatManager() {
     error: null,
   });
   const [isPending, startTransition] = useTransition();
+  const [isLoggingOut, startLogoutTransition] = useTransition();
 
   useEffect(() => {
     let active = true;
@@ -154,6 +170,23 @@ export function DashboardSeatManager() {
     });
   };
 
+  const handleLogout = () => {
+    startLogoutTransition(async () => {
+      try {
+        await logoutUser();
+        router.replace("/login");
+        router.refresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Unable to log out.";
+        setActionState({
+          seatId: null,
+          message: null,
+          error: message,
+        });
+      }
+    });
+  };
+
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
       <section className="rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-[0_24px_80px_-50px_rgba(15,23,42,0.45)] backdrop-blur sm:p-8">
@@ -166,14 +199,24 @@ export function DashboardSeatManager() {
               Seat Reservation Overview
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-              View the current state of Seat A, Seat B, and Seat C. Reserve an available seat
+              View the current state of A, B, and C. Reserve an available seat
               to move it through the hold and payment flow.
             </p>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-            <span className="font-semibold text-slate-900">{reservedSeats}</span>{" "}
-            of {seats.length || 3} seats reserved
+          <div className="flex flex-col gap-3 sm:items-end">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <span className="font-semibold text-slate-900">{reservedSeats}</span>{" "}
+              of {seats.length || 3} seats reserved
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isLoggingOut ? "Logging out..." : "Logout"}
+            </button>
           </div>
         </div>
 

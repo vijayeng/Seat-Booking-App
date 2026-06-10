@@ -31,13 +31,16 @@ export function ProjectScaffoldOverview() {
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
             This setup includes the requested framework, styling, ORM, database,
-            linting, and folder conventions without adding any business logic yet.
+            linting, and folder conventions without adding any business logic
+            yet.
           </p>
         </section>
 
         <div className="grid gap-6 md:grid-cols-2">
           <section className="rounded-[1.5rem] border border-slate-200 bg-[var(--card)] p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Folder Structure</h2>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Folder Structure
+            </h2>
             <ul className="mt-4 space-y-3 text-sm text-slate-600">
               {folders.map((folder) => (
                 <li
@@ -51,7 +54,9 @@ export function ProjectScaffoldOverview() {
           </section>
 
           <section className="rounded-[1.5rem] border border-slate-200 bg-[var(--card)] p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">Included Tooling</h2>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Included Tooling
+            </h2>
             <ul className="mt-4 space-y-3 text-sm text-slate-600">
               {tooling.map((item) => (
                 <li
