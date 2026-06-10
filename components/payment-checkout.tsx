@@ -250,14 +250,23 @@ export function PaymentCheckout() {
                   </div>
                 ) : null}
 
-                <button
-                  type="button"
-                  onClick={handleProceed}
-                  disabled={!seat || !isSeatReady || isPending}
-                  className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isPending ? "Processing..." : "Proceed To Payment"}
-                </button>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/dashboard")}
+                    className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Back to Dashboard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleProceed}
+                    disabled={!seat || !isSeatReady || isPending}
+                    className="inline-flex items-center justify-center rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isPending ? "Processing..." : "Proceed To Payment"}
+                  </button>
+                </div>
 
                 {!isSeatReady && seat ? (
                   <p className="mt-3 text-sm text-amber-700">
