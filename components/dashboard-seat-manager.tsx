@@ -10,6 +10,7 @@ type Seat = {
   seatNumber: string;
   status: SeatStatus;
   heldUntil: string | null;
+  isHeldByCurrentUser: boolean;
 };
 
 type SeatsResponse = {
@@ -34,7 +35,7 @@ const STATUS_STYLES: Record<
   HELD: {
     label: "Held",
     badge: "border-amber-200 bg-amber-50 text-amber-700",
-    helper: "Reserved in progress.",
+    helper: "Held temporarily while you complete payment.",
   },
   RESERVED: {
     label: "Reserved",
@@ -258,7 +259,8 @@ export function DashboardSeatManager() {
               const statusConfig = STATUS_STYLES[seat.status];
               const isActiveLoading = isPending && actionState.seatId === seat.id;
               const canReserve = seat.status === "AVAILABLE";
-              const isHeld = seat.status === "HELD";
+              const isHeldByMe = seat.status === "HELD" && seat.isHeldByCurrentUser;
+              const isHeldBySomeoneElse = seat.status === "HELD" && !seat.isHeldByCurrentUser;
 
               return (
                 <article
@@ -300,13 +302,21 @@ export function DashboardSeatManager() {
                       >
                         {isActiveLoading ? "Processing..." : "Reserve"}
                       </button>
-                    ) : isHeld ? (
+                    ) : isHeldByMe ? (
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/payment?seatId=${encodeURIComponent(seat.id)}`)}
+                        className="inline-flex w-full items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
+                      >
+                        Continue Payment
+                      </button>
+                    ) : isHeldBySomeoneElse ? (
                       <button
                         type="button"
                         disabled
-                        className="inline-flex w-full items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700"
+                        className="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-500"
                       >
-                        Reserved In Progress
+                        Held by another user
                       </button>
                     ) : (
                       <button

@@ -9,6 +9,7 @@ type SeatResponse = {
   seatNumber: string;
   status: "AVAILABLE" | "HELD" | "RESERVED";
   heldUntil: string | null;
+  isHeldByCurrentUser: boolean;
 };
 
 function unauthorizedResponse() {
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
         seatNumber: true,
         status: true,
         heldUntil: true,
+        heldByUserId: true,
       },
       orderBy: {
         seatNumber: "asc",
@@ -63,6 +65,8 @@ export async function GET(request: NextRequest) {
         seatNumber: seat.seatNumber,
         status: seat.status,
         heldUntil: seat.heldUntil ? seat.heldUntil.toISOString() : null,
+        isHeldByCurrentUser:
+          seat.status === "HELD" && seat.heldByUserId === authUser.userId,
       })),
     };
 
