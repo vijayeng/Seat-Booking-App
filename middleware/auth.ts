@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import { verifyAuthTokenEdge } from "@/lib/auth-edge";
+import { rateLimitAuthRequest } from "@/lib/rate-limit";
 
 const PROTECTED_PATH_PREFIXES = [
   "/dashboard",
@@ -24,8 +25,32 @@ function isApiRoute(pathname: string) {
   return pathname.startsWith("/api/");
 }
 
+function isRateLimitedAuthPath(pathname: string) {
+  return pathname === "/api/auth/login" || pathname === "/api/auth/signup";
+}
+
 export async function handleMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (isRateLimitedAuthPath(pathname)) {
+    const rateLimit = rateLimitAuthRequest(request);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: "Too many requests. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000)).toString(),
+          },
+        },
+      );
+    }
+
+    return NextResponse.next();
+  }
 
   if (!isProtectedPath(pathname)) {
     return NextResponse.next();
