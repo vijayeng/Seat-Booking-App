@@ -1,19 +1,35 @@
 import "dotenv/config";
 
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient, SeatStatus } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is required to run the seed script.");
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString }),
+});
 
 async function main() {
-  await prisma.seat.deleteMany();
+  const seats = ["Seat A", "Seat B", "Seat C"] as const;
 
-  await prisma.seat.createMany({
-    data: [
-      { seatNumber: "Seat A", status: SeatStatus.AVAILABLE },
-      { seatNumber: "Seat B", status: SeatStatus.AVAILABLE },
-      { seatNumber: "Seat C", status: SeatStatus.AVAILABLE },
-    ],
-  });
+  for (const seatNumber of seats) {
+    await prisma.seat.upsert({
+      where: { seatNumber },
+      create: {
+        seatNumber,
+        status: SeatStatus.AVAILABLE,
+      },
+      update: {
+        status: SeatStatus.AVAILABLE,
+        heldByUserId: null,
+        heldUntil: null,
+      },
+    });
+  }
 }
 
 main()
