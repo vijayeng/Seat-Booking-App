@@ -200,6 +200,10 @@ cp .env.example .env
 
 3. Update `.env` with a valid PostgreSQL connection string and a strong JWT secret.
 
+   The `.env.example` file is intentionally a template. Replace the placeholder
+   `DATABASE_URL` value with your own PostgreSQL connection string and set a
+   secure `JWT_SECRET` before running the app.
+
 4. Generate the Prisma client.
 
 ```bash
