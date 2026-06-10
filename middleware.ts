@@ -4,6 +4,7 @@ import { handleMiddleware } from "./middleware/auth";
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/payment/:path*",
     "/account/:path*",
     "/settings/:path*",
     "/api/private/:path*",

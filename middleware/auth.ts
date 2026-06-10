@@ -6,6 +6,7 @@ import { verifyAuthTokenEdge } from "@/lib/auth-edge";
 
 const PROTECTED_PATH_PREFIXES = [
   "/dashboard",
+  "/payment",
   "/account",
   "/settings",
   "/api/private",

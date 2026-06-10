@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 
 type SeatStatus = "AVAILABLE" | "HELD" | "RESERVED";
 
@@ -74,27 +75,11 @@ async function holdAndConfirmSeat(seatId: string) {
     throw new Error(payload?.error ?? "Unable to hold seat.");
   }
 
-  const paymentResponse = await fetch("/api/payment", {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ seatId }),
-  });
-
-  if (!paymentResponse.ok) {
-    const payload = (await paymentResponse.json().catch(() => null)) as
-      | { error?: string }
-      | null;
-
-    throw new Error(payload?.error ?? "Unable to confirm reservation.");
-  }
-
-  return (await paymentResponse.json()) as { success: true };
+  return (await holdResponse.json()) as { seat: Seat };
 }
 
 export function DashboardSeatManager() {
+  const router = useRouter();
   const [seats, setSeats] = useState<Seat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -152,15 +137,11 @@ export function DashboardSeatManager() {
           error: null,
         });
 
-        await holdAndConfirmSeat(seatId);
+        const result = await holdAndConfirmSeat(seatId);
         const data = await fetchSeats();
 
         setSeats(data.seats);
-        setActionState({
-          seatId,
-          message: "Reservation completed successfully.",
-          error: null,
-        });
+        router.push(`/payment?seatId=${encodeURIComponent(result.seat.id)}`);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Something went wrong.";
 
