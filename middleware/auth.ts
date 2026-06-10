@@ -4,7 +4,13 @@ import { NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME } from "@/lib/auth";
 import { verifyAuthTokenEdge } from "@/lib/auth-edge";
 
-const PROTECTED_PATH_PREFIXES = ["/dashboard", "/account", "/settings", "/api/private"];
+const PROTECTED_PATH_PREFIXES = [
+  "/dashboard",
+  "/account",
+  "/settings",
+  "/api/private",
+  "/api/seats",
+];
 
 function isProtectedPath(pathname: string) {
   return PROTECTED_PATH_PREFIXES.some(
