@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { validateSeatHoldRequest } from "@/lib/seat-hold-validation";
+import { expireStaleSeatHolds } from "@/lib/seat-hold-expiration";
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
@@ -46,6 +47,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const heldSeat = await prisma.$transaction(async (tx) => {
+      await expireStaleSeatHolds(tx);
+
       const seat = await tx.$queryRaw<
         Array<{
           id: string;

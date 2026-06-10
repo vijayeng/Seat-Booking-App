@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { expireStaleSeatHolds } from "@/lib/seat-hold-expiration";
 
 type SeatResponse = {
   id: string;
@@ -42,6 +43,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    await expireStaleSeatHolds(prisma);
+
     const seats = await prisma.seat.findMany({
       select: {
         id: true,
