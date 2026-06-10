@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { AUTH_COOKIE_NAME, verifyAuthToken } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { expireStaleSeatHolds } from "@/lib/seat-hold-expiration";
+import { confirmSeatReservation } from "@/lib/reservation-confirmation";
 import { validateSeatHoldRequest } from "@/lib/seat-hold-validation";
 
 function unauthorizedResponse() {
@@ -50,86 +50,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      await expireStaleSeatHolds(tx);
-
-      const seatRows = await tx.$queryRaw<
-        Array<{
-          id: string;
-          status: "AVAILABLE" | "HELD" | "RESERVED";
-          heldByUserId: string | null;
-          heldUntil: Date | null;
-        }>
-      >`
-        SELECT "id", "status", "heldByUserId", "heldUntil"
-        FROM "Seat"
-        WHERE "id" = ${validation.data.seatId}
-        FOR UPDATE
-      `;
-
-      const seat = seatRows[0];
-
-      if (!seat) {
-        return { kind: "not_found" as const };
-      }
-
-      if (seat.status !== "HELD" || seat.heldByUserId !== userId) {
-        return {
-          kind: "conflict" as const,
-        };
-      }
-
-      const reservation = await tx.reservation.create({
-        data: {
-          userId,
-          seatId: seat.id,
-          status: "PENDING",
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      const payment = await tx.payment.create({
-        data: {
-          reservationId: reservation.id,
-          status: "PENDING",
-        },
-        select: {
-          id: true,
-        },
-      });
-
-      await tx.payment.update({
-        where: {
-          id: payment.id,
-        },
-        data: {
-          status: "SUCCESS",
-        },
-      });
-
-      await tx.reservation.update({
-        where: {
-          id: reservation.id,
-        },
-        data: {
-          status: "CONFIRMED",
-        },
-      });
-
-      await tx.seat.update({
-        where: {
-          id: seat.id,
-        },
-        data: {
-          status: "RESERVED",
-          heldByUserId: null,
-          heldUntil: null,
-        },
-      });
-
-      return { kind: "success" as const };
+    const result = await confirmSeatReservation(prisma, {
+      seatId: validation.data.seatId,
+      userId,
     });
 
     if (result.kind === "not_found") {
@@ -141,10 +64,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (result.kind === "conflict") {
+    if (result.kind === "duplicate_active_reservation") {
       return NextResponse.json(
         {
-          error: "Seat must be HELD by the current user before payment.",
+          error: "A reservation already exists for this seat.",
+        },
+        { status: 409 },
+      );
+    }
+
+    if (result.kind === "validation_failed") {
+      return NextResponse.json(
+        {
+          error: "Seat must be HELD by the current user and the hold must be active.",
         },
         { status: 409 },
       );
